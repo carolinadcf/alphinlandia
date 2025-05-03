@@ -1,4 +1,7 @@
+
 using UnityEngine;
+using System;
+using System.Collections;
 
 public class FirstPersonController : MonoBehaviour
 {
@@ -6,6 +9,7 @@ public class FirstPersonController : MonoBehaviour
 
     [Header("Functional Options")]
     [SerializeField] private bool canInteract = true;
+    [SerializeField] private bool useStamina = true;
 
     [Header("Controls")]
     [SerializeField] private KeyCode interactKey = KeyCode.Mouse0; // left mouse button
@@ -19,6 +23,16 @@ public class FirstPersonController : MonoBehaviour
     [SerializeField, Range(1, 10)] private float lookSpeedY = 2.0f;
     [SerializeField, Range(1, 180)] private float upperLookLimit = 80.0f;
     [SerializeField, Range(1, 180)] private float lowerLookLimit = 80.0f;
+
+    [Header("Stamina Parameters")]
+    [SerializeField] private float maxStamina = 100;
+    [SerializeField] private float staminaUseMultiplier = 5;
+    [SerializeField] private float timeBeforeStaminaRegenStarts = 5; // seconds
+    [SerializeField] private float staminaValueIncrement = 2;
+    [SerializeField] private float staminaTimeIncrement = 0.1f;
+    private float currentStamina;
+    private Coroutine regeneratingStamina;
+    public static Action<float> OnStaminaChange;
 
     [Header("Interaction")]
     [SerializeField] private Vector3 interactionRayPoint = default;
@@ -39,7 +53,9 @@ public class FirstPersonController : MonoBehaviour
         playerCamera = GetComponentInChildren<Camera>();
         characterController = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;        
+        Cursor.visible = false;       
+        
+        currentStamina = maxStamina;
     }
 
     // Update is called once per frame
@@ -53,6 +69,10 @@ public class FirstPersonController : MonoBehaviour
             {
                 HandleInteractionCheck();
                 HandleInteractionInput();
+            }
+
+            if(useStamina) {
+                HandleStamina();
             }
 
             ApplyFinalMovements();
@@ -103,6 +123,36 @@ public class FirstPersonController : MonoBehaviour
         {
             currentInteractable.OnInteract();
         } 
+    }  
+
+    private void HandleStamina()
+    {
+        // moving
+        if (currentInput != Vector2.zero)
+        {
+            if (regeneratingStamina != null)
+            {
+                StopCoroutine(regeneratingStamina);
+                regeneratingStamina = null;
+            }
+
+            currentStamina -= staminaUseMultiplier * Time.deltaTime;
+            
+            if (currentStamina < 0)
+            {
+                currentStamina = 0;
+            }
+            
+            if (currentStamina < 50) 
+                walkSpeed = 1.0f;
+
+            OnStaminaChange?.Invoke(currentStamina);
+        }
+
+        if (currentStamina < maxStamina && regeneratingStamina == null)
+        {
+            regeneratingStamina = StartCoroutine(RegenerateStamina());
+        }
     }
 
     private void ApplyFinalMovements()
@@ -111,5 +161,30 @@ public class FirstPersonController : MonoBehaviour
             moveDirection.y -= gravity * Time.deltaTime;
 
         characterController.Move(moveDirection * Time.deltaTime);
+    }
+
+    private IEnumerator RegenerateStamina()
+    {
+        yield return new WaitForSeconds(timeBeforeStaminaRegenStarts);
+
+        WaitForSeconds timeToWait = new WaitForSeconds(staminaTimeIncrement);
+
+        while (currentStamina < maxStamina)
+        {
+            currentStamina += staminaValueIncrement;
+
+            if (currentStamina > maxStamina)
+            {
+                currentStamina = maxStamina;
+                walkSpeed = 3.0f;
+            }
+
+            OnStaminaChange?.Invoke(currentStamina);
+            
+            yield return timeToWait;
+        }
+
+        regeneratingStamina = null;
+
     }
 }

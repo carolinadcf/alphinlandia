@@ -6,6 +6,8 @@ public class TestInteractable : Interactable
     public int itemID = 1;
     public Sprite itemIcon;
 
+    [SerializeField] private AudioClip[] pickupSounds;
+
     public override void OnFocus()
     {
         print("LOOKING AT " + gameObject.name);
@@ -16,6 +18,7 @@ public class TestInteractable : Interactable
         if (InventoryManager.Instance != null)
         {
             InventoryManager.Instance.AddItem(new InventoryItem(itemName, itemID, itemIcon));
+            SoundFXManager.instance.PlayRandomSoundFXClip(pickupSounds, gameObject.transform, 1f);
         }
 
         // disable object so it cannot be grabbed again

@@ -52,16 +52,17 @@ public class FirstPersonController : MonoBehaviour
     {
         playerCamera = GetComponentInChildren<Camera>();
         characterController = GetComponent<CharacterController>();
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;       
-        
+        // Cursor.lockState = CursorLockMode.Locked;
+        // Cursor.visible = false;       
+
         currentStamina = maxStamina;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (CanMove) {
+        if (CanMove)
+        {
             HandleMovementInput();
             HandleMouseLook();
 
@@ -71,7 +72,8 @@ public class FirstPersonController : MonoBehaviour
                 HandleInteractionInput();
             }
 
-            if(useStamina) {
+            if (useStamina)
+            {
                 HandleStamina();
             }
 
@@ -98,9 +100,9 @@ public class FirstPersonController : MonoBehaviour
 
     private void HandleInteractionCheck()
     {
-        if(Physics.Raycast(playerCamera.ViewportPointToRay(interactionRayPoint), out RaycastHit hit, interactionDistance))
+        if (Physics.Raycast(playerCamera.ViewportPointToRay(interactionRayPoint), out RaycastHit hit, interactionDistance))
         {
-            if(hit.collider.gameObject.layer == 6 && (currentInteractable == null || hit.collider.gameObject.GetInstanceID() != currentInteractable.gameObject.GetInstanceID()))
+            if (hit.collider.gameObject.layer == 6 && (currentInteractable == null || hit.collider.gameObject.GetInstanceID() != currentInteractable.gameObject.GetInstanceID()))
             {
                 hit.collider.TryGetComponent(out currentInteractable);
 
@@ -119,11 +121,11 @@ public class FirstPersonController : MonoBehaviour
 
     private void HandleInteractionInput()
     {
-        if(Input.GetKeyDown(interactKey) && currentInteractable != null && Physics.Raycast(playerCamera.ViewportPointToRay(interactionRayPoint), out RaycastHit hit, interactionDistance, interactionLayer))
+        if (Input.GetKeyDown(interactKey) && currentInteractable != null && Physics.Raycast(playerCamera.ViewportPointToRay(interactionRayPoint), out RaycastHit hit, interactionDistance, interactionLayer))
         {
             currentInteractable.OnInteract();
-        } 
-    }  
+        }
+    }
 
     private void HandleStamina()
     {
@@ -137,13 +139,13 @@ public class FirstPersonController : MonoBehaviour
             }
 
             currentStamina -= staminaUseMultiplier * Time.deltaTime;
-            
+
             if (currentStamina < 0)
             {
                 currentStamina = 0;
             }
-            
-            if (currentStamina < 50) 
+
+            if (currentStamina < 50)
                 walkSpeed = 1.0f;
 
             OnStaminaChange?.Invoke(currentStamina);
@@ -180,7 +182,7 @@ public class FirstPersonController : MonoBehaviour
             }
 
             OnStaminaChange?.Invoke(currentStamina);
-            
+
             yield return timeToWait;
         }
 

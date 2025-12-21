@@ -52,8 +52,8 @@ public class FirstPersonController : MonoBehaviour
     {
         playerCamera = GetComponentInChildren<Camera>();
         characterController = GetComponent<CharacterController>();
-        // Cursor.lockState = CursorLockMode.Locked;
-        // Cursor.visible = false;       
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
 
         currentStamina = maxStamina;
     }

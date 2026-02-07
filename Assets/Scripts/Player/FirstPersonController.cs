@@ -50,16 +50,22 @@ public class FirstPersonController : MonoBehaviour
     {
         if (CanMove)
         {
-            HandleMovementInput();
-            HandleMouseLook();
-
-            if (canInteract)
+            // Only allow movement and interaction when the cursor is hidden (i.e., not in a menu)
+            if (!Cursor.visible)
             {
-                HandleInteractionCheck();
-                HandleInteractionInput();
+                HandleMovementInput();
+                HandleMouseLook();
+
+                if (canInteract)
+                {
+                    HandleInteractionCheck();
+                    HandleInteractionInput();
+                }
+
+                ApplyFinalMovements();
             }
 
-            ApplyFinalMovements();
+
         }
     }
 

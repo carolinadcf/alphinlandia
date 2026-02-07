@@ -15,6 +15,8 @@ public class MenuManager : MonoBehaviour
             pauseMenu.SetActive(false);
         if (settingsMenu != null)
             settingsMenu.SetActive(false);
+        // ensure cursor matches initial menu state
+        UpdateCursorState();
     }
 
     // Toggle pause menu on Escape key press
@@ -51,6 +53,8 @@ public class MenuManager : MonoBehaviour
             {
                 settingsMenu.SetActive(false);
             }
+            // update cursor based on menu visibility
+            UpdateCursorState();
         }
     }
 
@@ -62,6 +66,8 @@ public class MenuManager : MonoBehaviour
             settingsMenu.SetActive(!isActive);
             // toggle pause menu visibility
             TogglePauseMenu();
+            // ensure cursor state reflects new menu state
+            UpdateCursorState();
         }
     }
 
@@ -71,6 +77,8 @@ public class MenuManager : MonoBehaviour
         {
             pauseMenu.SetActive(false);
             Time.timeScale = 1;
+            // update cursor based on menu visibility
+            UpdateCursorState();
         }
     }
 
@@ -80,7 +88,7 @@ public class MenuManager : MonoBehaviour
         Application.Quit();
         // If running in the Unity editor, stop playing
 #if UNITY_EDITOR
-                UnityEditor.EditorApplication.isPlaying = false;
+            UnityEditor.EditorApplication.isPlaying = false;
 #endif
     }
 
@@ -90,6 +98,7 @@ public class MenuManager : MonoBehaviour
         SceneManager.LoadScene(
             SceneManager.GetActiveScene().buildIndex);
         Time.timeScale = 1;
+        UpdateCursorState();
     }
 
     // Load the main menu scene (assuming it's at index 0)
@@ -97,8 +106,17 @@ public class MenuManager : MonoBehaviour
     {
         SceneManager.LoadScene(0);
         Time.timeScale = 1;
+        UpdateCursorState();
+    }
+
+    // Update cursor visibility and lock state depending on whether any menu is open
+    private void UpdateCursorState()
+    {
+        bool anyMenuOpen = (mainMenu != null && mainMenu.activeSelf)
+                        || (pauseMenu != null && pauseMenu.activeSelf)
+                        || (settingsMenu != null && settingsMenu.activeSelf);
+        Cursor.visible = anyMenuOpen;
+        Cursor.lockState = anyMenuOpen ? CursorLockMode.None : CursorLockMode.Locked;
     }
 
 }
-
-

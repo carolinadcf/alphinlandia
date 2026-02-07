@@ -15,11 +15,7 @@ public class TestInteractable : Interactable
     public override void OnInteract()
     {
         print("INTERACTED WITH " + gameObject.name);
-        if (InventoryManager.Instance != null)
-        {
-            InventoryManager.Instance.AddItem(new InventoryItem(itemName, itemID, itemIcon));
-            SoundFXManager.instance.PlayRandomSoundFXClip(pickupSounds, gameObject.transform, 1f);
-        }
+        SoundFXManager.instance.PlayRandomSoundFXClip(pickupSounds, gameObject.transform, 1f);
 
         // disable object so it cannot be grabbed again
         gameObject.SetActive(false);

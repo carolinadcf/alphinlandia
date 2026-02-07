@@ -1,4 +1,6 @@
 using UnityEngine;
+using Proyecto3.Environment;
+using Proyecto3.Managers.SoundManager;
 
 public class TestInteractable : Interactable
 {

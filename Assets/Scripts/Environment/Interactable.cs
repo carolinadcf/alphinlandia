@@ -1,12 +1,16 @@
 using UnityEngine;
 
-public abstract class Interactable : MonoBehaviour
+namespace Proyecto3.Environment
 {
-    public virtual void Awake ()
+    public abstract class Interactable : MonoBehaviour
     {
-        gameObject.layer = 6; // Interactable layer
+        public virtual void Awake()
+        {
+            gameObject.layer = 6; // Interactable layer
+        }
+        public abstract void OnInteract();
+        public abstract void OnFocus();
+        public abstract void OnLoseFocus();
     }
-    public abstract void OnInteract();
-    public abstract void OnFocus();
-    public abstract void OnLoseFocus();
+
 }

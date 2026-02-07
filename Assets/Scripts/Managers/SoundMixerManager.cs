@@ -1,24 +1,27 @@
 using UnityEngine;
 using UnityEngine.Audio;
 
-public class SoundMixerManager : MonoBehaviour
+namespace Proyecto3.Managers.SoundManager
 {
-    [SerializeField] private AudioMixer audioMixer;
-
-    public void SetMasterVolume(float volume)
+    public class SoundMixerManager : MonoBehaviour
     {
-        audioMixer.SetFloat("masterVolume", Mathf.Log10(volume) * 20f);
+        [SerializeField] private AudioMixer audioMixer;
+
+        public void SetMasterVolume(float volume)
+        {
+            audioMixer.SetFloat("masterVolume", Mathf.Log10(volume) * 20f);
+        }
+
+        public void SetSFXVolume(float volume)
+        {
+            audioMixer.SetFloat("soundFXVolume", Mathf.Log10(volume) * 20f);
+        }
+
+        public void SetMusicVolume(float volume)
+        {
+            audioMixer.SetFloat("musicVolume", Mathf.Log10(volume) * 20f);
+        }
+
+
     }
-
-    public void SetSFXVolume(float volume)
-    {
-        audioMixer.SetFloat("soundFXVolume", Mathf.Log10(volume) * 20f);
-    }
-
-    public void SetMusicVolume(float volume)
-    {
-        audioMixer.SetFloat("musicVolume", Mathf.Log10(volume) * 20f);
-    }
-
-
 }

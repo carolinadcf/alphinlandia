@@ -8,10 +8,10 @@ namespace Proyecto3.Player
 {
     public class FirstPersonController : MonoBehaviour
     {
-        public bool CanMove { get; private set; } = true;
 
         [Header("Functional Options")]
         [SerializeField] private bool canInteract = true;
+        [SerializeField] private bool canMove = false;
 
         [Header("Controls")]
         [SerializeField] private KeyCode interactKey = KeyCode.Mouse0; // left mouse button
@@ -51,7 +51,7 @@ namespace Proyecto3.Player
         // Update is called once per frame
         void Update()
         {
-            if (CanMove)
+            if (canMove)
             {
                 // Only allow movement and interaction when the cursor is hidden (i.e., not in a menu)
                 if (!Cursor.visible)

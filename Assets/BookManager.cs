@@ -10,16 +10,16 @@ namespace Proyecto3.Book
         [SerializeField] private GameObject rightPage;
 
         // Singleton instance
-        private static BookManager instance;
-        public static BookManager Instance
+        public static BookManager Instance { get; private set; }
+        private void Awake()
         {
-            get
+            if (Instance != null && Instance != this)
             {
-                if (instance == null)
-                {
-                    instance = FindFirstObjectByType<BookManager>();
-                }
-                return instance;
+                Destroy(this);
+            }
+            else
+            {
+                Instance = this;
             }
         }
 

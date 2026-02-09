@@ -1,0 +1,34 @@
+{
+    "BookTitle": "Una Tiefling Salvaje",
+    "Author": "Pijamada Real",
+    "Pages": [
+        {
+            "PageID": 0,
+            "PageText": "Hello, world!",
+            "PageImage": "Assets/Resources/Example Page Illustration.jpg",
+            "IsLeftPage": true,
+            "NextPageID": 1
+        },
+        {
+            "PageID": 1,
+            "PageText": "Byee",
+            "PageImage": "Assets/Resources/Example Page Illustration 2.jpg",
+            "IsLeftPage": false,
+            "NextPageID": 2
+        },
+        {
+            "PageID": 2,
+            "PageText": "This is the third page.",
+            "PageImage": "Assets/Resources/Example Page Illustration 2.jpg",
+            "IsLeftPage": true,
+            "NextPageID": 3
+        },
+        {
+            "PageID": 3,
+            "PageText": "This is the fourth page.",
+            "PageImage": "Assets/Resources/Example Page Illustration.jpg",
+            "IsLeftPage": false,
+            "NextPageID": 0
+        }
+    ]
+}

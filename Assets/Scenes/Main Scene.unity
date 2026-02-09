@@ -1083,7 +1083,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 246121367}
-  - component: {fileID: 246121366}
   - component: {fileID: 246121368}
   m_Layer: 0
   m_Name: BookManager
@@ -1092,20 +1091,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &246121366
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 246121365}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e25fcf5ab30095544918151142a74ecc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  leftPage: {fileID: 0}
-  rightPage: {fileID: 0}
 --- !u!4 &246121367
 Transform:
   m_ObjectHideFlags: 0
@@ -1135,6 +1120,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   leftPage: {fileID: 1606185526}
   rightPage: {fileID: 1628512669}
+  allPages:
+  - {fileID: 11400000, guid: 208203427040c8744a93e793ca146aca, type: 2}
+  - {fileID: 11400000, guid: fadabeb7e85c4ae4988f15518501796b, type: 2}
+  - {fileID: 11400000, guid: 72e7e77943f3e9943878f34798432add, type: 2}
+  - {fileID: 11400000, guid: f9732fc15044e914abb35a84906290bf, type: 2}
 --- !u!1 &261029154
 GameObject:
   m_ObjectHideFlags: 0
@@ -1931,6 +1921,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &644845126 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5306581233276670076, guid: 985a0ca2483b0f64b88a407c5d6cf280, type: 3}
+  m_PrefabInstance: {fileID: 4904170933246838061}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &644845128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 644845126}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ae29d7d3a2c9874c92eeda7ff1ea953, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bookData: {fileID: 11400000, guid: e00c29f63fdb0764eaa9744e18d41908, type: 2}
 --- !u!1 &767272355
 GameObject:
   m_ObjectHideFlags: 0
@@ -4974,7 +4982,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pageData: {fileID: 11400000, guid: 208203427040c8744a93e793ca146aca, type: 2}
-  isLeftPage: 1
 --- !u!1 &1607677782
 GameObject:
   m_ObjectHideFlags: 0
@@ -5164,7 +5171,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pageData: {fileID: 11400000, guid: fadabeb7e85c4ae4988f15518501796b, type: 2}
-  isLeftPage: 0
 --- !u!1 &1648015124
 GameObject:
   m_ObjectHideFlags: 0
@@ -5237,6 +5243,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   canInteract: 1
+  canMove: 0
   interactKey: 323
   walkSpeed: 3
   gravity: 30
@@ -6897,6 +6904,9 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5306581233276670076, guid: 985a0ca2483b0f64b88a407c5d6cf280, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 644845128}
     - targetCorrespondingSourceObject: {fileID: 5033156823421866881, guid: 985a0ca2483b0f64b88a407c5d6cf280, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1606185529}

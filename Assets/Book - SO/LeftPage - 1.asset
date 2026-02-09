@@ -12,5 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2bc20d6792234564789c19f5a3d93bf5, type: 3}
   m_Name: LeftPage - 1
   m_EditorClassIdentifier: 
+  _pageID: 0
   _pageImage: {fileID: 2800000, guid: 3b9d8be6795ec8041b2c0ada45c49073, type: 3}
   _pageText: Hello, world!
+  _isLeftPage: 1
+  _nextPageID: 2

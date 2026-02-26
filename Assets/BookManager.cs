@@ -10,6 +10,25 @@ namespace Proyecto3.Book
         [SerializeField] private GameObject leftPage;
         [SerializeField] private GameObject rightPage;
         [SerializeField] public List<PageData> allPages; // List of all page data scriptable objects
+        [SerializeField] private TextAsset _bookJson;
+
+        [System.Serializable]
+        private class PageJsonData
+        {
+            public int PageID;
+            public string PageText;
+            public string PageImage;
+            public bool IsLeftPage;
+            public int NextPageID;
+        }
+
+        [System.Serializable]
+        private class BookJsonData
+        {
+            public string BookTitle;
+            public string Author;
+            public PageJsonData[] Pages;
+        }
 
         // Singleton instance
         public static BookManager Instance { get; private set; }
@@ -23,6 +42,46 @@ namespace Proyecto3.Book
             {
                 Instance = this;
             }
+        }
+
+        private void Start()
+        {
+            if (_bookJson != null)
+                LoadBookFromJson(_bookJson.text);
+        }
+
+        private void LoadBookFromJson(string json)
+        {
+            BookJsonData bookData = JsonUtility.FromJson<BookJsonData>(json);
+            if (bookData == null || bookData.Pages == null) return;
+
+            allPages.Clear();
+
+            foreach (PageJsonData p in bookData.Pages)
+            {
+                PageData page = ScriptableObject.CreateInstance<PageData>();
+                Texture texture = LoadTexture(p.PageImage);
+                page.Initialize(p.PageID, p.PageText, texture, p.IsLeftPage, p.NextPageID);
+                allPages.Add(page);
+            }
+
+            PageData firstLeft  = allPages.Find(p => p.IsLeftPage  && p.PageID == 0);
+            PageData firstRight = allPages.Find(p => !p.IsLeftPage && p.PageID == 1);
+            if (firstLeft  != null) UpdatePage(firstLeft);
+            if (firstRight != null) UpdatePage(firstRight);
+        }
+
+        private Texture LoadTexture(string path)
+        {
+            const string prefix = "Assets/Resources/";
+            if (path.StartsWith(prefix))
+                path = path.Substring(prefix.Length);
+
+            int dot = path.LastIndexOf('.');
+            if (dot >= 0)
+                path = path.Substring(0, dot);
+
+            return Resources.Load<Texture>(path);
         }
 
         public void UpdatePage(PageData pageData)

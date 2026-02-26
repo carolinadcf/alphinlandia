@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
+using DG.Tweening;
 
 namespace Proyecto3.Book
 {
@@ -9,9 +10,18 @@ namespace Proyecto3.Book
     {
         [SerializeField] private GameObject leftPage;
         [SerializeField] private GameObject rightPage;
-        [SerializeField] public List<PageData> allPages; // List of all page data scriptable objects
+        [SerializeField] public List<PageData> allPages;
         [SerializeField] private TextAsset _bookJson;
+
+        [Header("Turning Page")]
+        [SerializeField] private GameObject turningPagePivot;
+        [SerializeField] private GameObject turningFront;
+        [SerializeField] private GameObject turningBack;
+        [SerializeField] private float turnDuration = 0.6f;
+
         private int _currentSpreadStart = 0;
+        private bool _isAnimating = false;
+        public bool IsAnimating => _isAnimating;
 
         [System.Serializable]
         private class PageJsonData
@@ -87,40 +97,103 @@ namespace Proyecto3.Book
             return Resources.Load<Texture>(path);
         }
 
+        private void SetPageContent(GameObject target, PageData data)
+        {
+            if (target == null || data == null) return;
+            target.GetComponentInChildren<TextMeshPro>().text = data.PageText;
+            target.GetComponentInChildren<Renderer>().material.SetTexture("_BaseMap", data.PageImage);
+        }
+
         public void UpdatePage(PageData pageData)
         {
-            if (pageData != null)
+            if (pageData == null) return;
+            if (pageData.IsLeftPage)
             {
-                // access page data and update the book prefab accordingly
-                if (pageData.IsLeftPage)
-                {
-                    leftPage.GetComponent<Page>().pageData = pageData; // set the page data of the left page to the current page data
-
-                    // update page content based on new page data
-                    leftPage.GetComponentInChildren<TextMeshPro>().text = pageData.PageText;
-                    // change base map texture of the left page material to pageData.PageImage
-                    leftPage.GetComponentInChildren<Renderer>().material.SetTexture("_BaseMap", pageData.PageImage);
-                }
-                else
-                {
-                    rightPage.GetComponent<Page>().pageData = pageData; // set the page data of the right page to the current page data
-
-                    rightPage.GetComponentInChildren<TextMeshPro>().text = pageData.PageText;
-                    rightPage.GetComponentInChildren<Renderer>().material.SetTexture("_BaseMap", pageData.PageImage);
-                }
+                leftPage.GetComponent<Page>().pageData = pageData;
+                SetPageContent(leftPage, pageData);
+            }
+            else
+            {
+                rightPage.GetComponent<Page>().pageData = pageData;
+                SetPageContent(rightPage, pageData);
             }
         }
 
         public void NextPages()
         {
+            if (_isAnimating) return;
+
             int nextSpreadStart = _currentSpreadStart + 2;
             if (allPages.Find(p => p.PageID == nextSpreadStart) == null)
             {
                 Debug.Log("End of book.");
                 return;
             }
-            _currentSpreadStart = nextSpreadStart;
-            ShowSpread(_currentSpreadStart);
+
+            PageData nextLeft  = allPages.Find(p =>  p.IsLeftPage && p.PageID == nextSpreadStart);
+            PageData nextRight = allPages.Find(p => !p.IsLeftPage && p.PageID == nextSpreadStart + 1);
+
+            PlayPageTurn(nextLeft, nextRight, nextSpreadStart);
+        }
+
+        private void PlayPageTurn(PageData nextLeft, PageData nextRight, int nextSpreadStart)
+        {
+            if (turningPagePivot == null || turningFront == null || turningBack == null)
+            {
+                Debug.LogWarning("BookManager: Turning page objects not assigned in inspector. Falling back to instant swap.");
+                _currentSpreadStart = nextSpreadStart;
+                ShowSpread(_currentSpreadStart);
+                return;
+            }
+
+            _isAnimating = true;
+
+            // Current right page = the page being "lifted" away
+            PageData currentRight = allPages.Find(p => !p.IsLeftPage && p.PageID == _currentSpreadStart + 1);
+
+            // Load turning page faces
+            SetPageContent(turningFront, currentRight); // page leaving
+            SetPageContent(turningBack, nextLeft);       // page arriving
+
+            // Pre-load static right page with next-right content
+            // (hidden under TurningFront during first half)
+            SetPageContent(rightPage, nextRight);
+            if (nextRight != null) rightPage.GetComponent<Page>().pageData = nextRight;
+
+            // Activate and reset pivot
+            turningPagePivot.transform.localEulerAngles = Vector3.zero;
+            turningPagePivot.SetActive(true);
+
+            Sequence seq = DOTween.Sequence();
+
+            // First half: 0° → -90°, page lifts to vertical (InSine = starts slow, feels weighted)
+            seq.Append(
+                turningPagePivot.transform
+                    .DOLocalRotate(new Vector3(0f, -90f, 0f), turnDuration * 0.5f, RotateMode.Fast)
+                    .SetEase(Ease.InSine)
+            );
+
+            // Midpoint: page is edge-on and invisible — silently swap static LeftPage
+            seq.AppendCallback(() =>
+            {
+                SetPageContent(leftPage, nextLeft);
+                if (nextLeft != null) leftPage.GetComponent<Page>().pageData = nextLeft;
+            });
+
+            // Second half: -90° → -180°, page lands on the left (OutSine = decelerates, settles)
+            seq.Append(
+                turningPagePivot.transform
+                    .DOLocalRotate(new Vector3(0f, -180f, 0f), turnDuration * 0.5f, RotateMode.Fast)
+                    .SetEase(Ease.OutSine)
+            );
+
+            seq.OnComplete(() =>
+            {
+                turningPagePivot.SetActive(false);
+                turningPagePivot.transform.localEulerAngles = Vector3.zero;
+                _currentSpreadStart = nextSpreadStart;
+                _isAnimating = false;
+            });
         }
 
         private void ShowSpread(int leftPageID)

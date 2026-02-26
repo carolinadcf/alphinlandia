@@ -13,6 +13,7 @@ public class Page : MonoBehaviour
 
     private void OnMouseDown()
     {
+        if (BookManager.Instance.IsAnimating) return;
         BookManager.Instance.NextPages();
     }
 }

@@ -88,10 +88,11 @@ FirstPersonController
 BookManager (singleton)
   ├── reads book1.json → creates PageData instances
   ├── owns allPages list
-  └── drives left/right Page GameObjects in Book.prefab
+  ├── drives left/right Page GameObjects in Book.prefab
+  └── PlayPageTurn() → DOTween Sequence on TurningPagePivot
 
-Page (MonoBehaviour on each page GameObject)
-  └── OnMouseDown() → BookManager.Instance.NextPages()
+Page (MonoBehaviour on static page GameObjects)
+  └── OnMouseDown() → IsAnimating check → BookManager.Instance.NextPages()
 
 SoundFXManager (singleton)
   └── spawns SoundFXObject.prefab → plays clip → destroys self
@@ -113,6 +114,8 @@ All interactable objects must be on **layer 6** (`Interactable`). `Interactable.
 | Document | Covers | Relevant to |
 |----------|--------|-------------|
 | [Book System](book-system.md) | `Book`, `BookData`, `Page`, `PageData`, `BookManager` — components, page turn flow, inspector setup, rules | The `Proyecto3.Book` namespace; the `Book.prefab` and `Book - SO/` assets listed in the project structure |
+| [Page-Turn Animation](page-turn-animation.md) | DOTween page-turn sequence, TurningPagePivot hierarchy, animation phases, `PlayPageTurn`, `IsAnimating` guard | The `Book.prefab` turning page GameObjects; `PlayPageTurn` and `SetPageContent` in `BookManager`; DOTween in the tech stack |
+| [Prefab Setup Guide](prefab-setup-guide.md) | Step-by-step Unity Editor instructions to set up the turning page GameObjects and wire BookManager inspector fields | Required one-time setup for the page-turn animation to work |
 | [JSON Book Loading](json-book-loading.md) | How `BookManager` deserializes `book1.json` at runtime, texture loading, JSON contract | The `book1.json` file in `Book - SO/`; the `LoadBookFromJson` / `LoadTexture` methods in `BookManager` |
 | [Player & Interaction](player-interaction.md) | `FirstPersonController`, `Interactable` abstract class, how to add new interactables | The `Proyecto3.Player` and `Proyecto3.Environment` namespaces; the Interactable layer (layer 6) noted in Key Relationships |
 | [Menu System](menu-system.md) | `MenuManager`, `MenuEventSystemHandler`, cursor/time scale logic, scene flow | The `Proyecto3.Managers.MenuManager` namespace; the `Menu.unity` and `Main Scene.unity` scenes; how cursor state gates player movement |

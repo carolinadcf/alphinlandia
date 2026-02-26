@@ -2,9 +2,10 @@
 
 ## Context
 
-The book system renders an open book as a spread — two pages visible at once, a left and a right. The player clicks a page to advance to the next spread. Content (text, images) is loaded at runtime from a JSON file so it can be edited without touching the Unity editor.
+The book system renders an open book as a spread — two pages visible at once, a left and a right. The player clicks a page to advance to the next spread with an animated page turn. Content (text, images) is loaded at runtime from a JSON file so it can be edited without touching the Unity editor.
 
-See [JSON Book Loading](json-book-loading.md) for full implementation details of the JSON pipeline.
+See [JSON Book Loading](json-book-loading.md) for the JSON pipeline details.
+See [Page-Turn Animation](page-turn-animation.md) for the animation system details.
 
 ---
 
@@ -38,13 +39,13 @@ A thin `MonoBehaviour` on the book GameObject that holds a reference to a `BookD
 
 ### `Page` — `Scripts/Book/Page.cs`
 
-Attached to each page GameObject inside `Book.prefab` (one for left, one for right). Holds a reference to its current `PageData`.
+Attached to the static page GameObjects inside `Book.prefab` (LeftPage and RightPage). Holds a reference to its current `PageData`.
 
 ```csharp
 public PageData pageData;
 ```
 
-When the player clicks a page, `OnMouseDown()` fires and calls `BookManager.Instance.NextPages()`. This is the only input trigger for page turning.
+When the player clicks a page, `OnMouseDown()` fires. It checks `BookManager.Instance.IsAnimating` first — if a turn is already in progress, the click is ignored. Otherwise it calls `NextPages()`.
 
 ### `BookManager` — `BookManager.cs`
 
@@ -62,9 +63,13 @@ The central controller. Singleton. Lives at `Assets/BookManager.cs` (not inside 
 |--------|-------------|
 | `LoadBookFromJson(string json)` | Parses JSON, creates PageData instances, shows first spread |
 | `ShowSpread(int leftPageID)` | Finds left and right PageData for a given spread and calls `UpdatePage` on both |
-| `UpdatePage(PageData pageData)` | Sets text and texture on the appropriate page GameObject |
-| `NextPages()` | Advances `_currentSpreadStart` by 2 and calls `ShowSpread` |
+| `UpdatePage(PageData pageData)` | Routes to the correct static page GO and calls `SetPageContent` |
+| `SetPageContent(GameObject, PageData)` | Sets text and texture on any target GO — used for static and turning pages |
+| `NextPages()` | Guards against animation, then calls `PlayPageTurn()` |
+| `PlayPageTurn(...)` | Runs the DOTween Sequence for the page-turn animation |
 | `LoadTexture(string path)` | Loads a texture from a path (editor: `AssetDatabase`, runtime: `Resources.Load`) |
+
+`IsAnimating` (public bool property) is exposed so `Page.OnMouseDown` can block clicks mid-animation.
 
 ---
 
@@ -73,14 +78,19 @@ The central controller. Singleton. Lives at `Assets/BookManager.cs` (not inside 
 ```
 Player clicks page
   └── Page.OnMouseDown()
+        ├── IsAnimating? → ignore click
         └── BookManager.Instance.NextPages()
-              └── _currentSpreadStart += 2
-                    └── ShowSpread(_currentSpreadStart)
-                          ├── find PageData where IsLeftPage && PageID == leftID  → UpdatePage()
-                          └── find PageData where !IsLeftPage && PageID == leftID+1 → UpdatePage()
+              └── PlayPageTurn(nextLeft, nextRight, nextSpreadStart)
+                    ├── load TurningFront with current right content
+                    ├── load TurningBack with next left content
+                    ├── pre-load static RightPage with next right content
+                    ├── DOTween: pivot 0° → -90° (InSine)
+                    ├── AppendCallback: swap static LeftPage content (edge-on, invisible)
+                    ├── DOTween: pivot -90° → -180° (OutSine)
+                    └── OnComplete: deactivate pivot, advance _currentSpreadStart
 ```
 
-Both pages always update together as a single spread. It is not possible for left and right to get out of sync.
+Both pages always update together as a single spread. The animation prevents any out-of-sync state via the `_isAnimating` guard.
 
 ---
 
@@ -104,10 +114,14 @@ Pages are numbered sequentially starting from 0:
 
 | Field | What to assign |
 |-------|----------------|
-| `Left Page` | The left page GameObject inside Book.prefab |
-| `Right Page` | The right page GameObject inside Book.prefab |
+| `Left Page` | LeftPage GO inside Book.prefab |
+| `Right Page` | RightPage GO inside Book.prefab |
 | `All Pages` | Leave empty — populated at runtime from JSON |
 | `Book Json` | Drag `book1.json` here |
+| `Turning Page Pivot` | TurningPagePivot GO inside Book.prefab |
+| `Turning Front` | TurningFront GO inside Book.prefab |
+| `Turning Back` | TurningBack GO inside Book.prefab |
+| `Turn Duration` | Animation length in seconds (default 0.6) |
 
 ---
 

@@ -10,6 +10,26 @@ namespace Proyecto3.Book
         [SerializeField] private GameObject leftPage;
         [SerializeField] private GameObject rightPage;
         [SerializeField] public List<PageData> allPages; // List of all page data scriptable objects
+        [SerializeField] private TextAsset _bookJson;
+        private int _currentSpreadStart = 0;
+
+        [System.Serializable]
+        private class PageJsonData
+        {
+            public int PageID;
+            public string PageText;
+            public string PageImage;
+            public bool IsLeftPage;
+            public int NextPageID;
+        }
+
+        [System.Serializable]
+        private class BookJsonData
+        {
+            public string BookTitle;
+            public string Author;
+            public PageJsonData[] Pages;
+        }
 
         // Singleton instance
         public static BookManager Instance { get; private set; }
@@ -23,6 +43,48 @@ namespace Proyecto3.Book
             {
                 Instance = this;
             }
+        }
+
+        private void Start()
+        {
+            if (_bookJson != null)
+                LoadBookFromJson(_bookJson.text);
+        }
+
+        private void LoadBookFromJson(string json)
+        {
+            BookJsonData bookData = JsonUtility.FromJson<BookJsonData>(json);
+            if (bookData == null || bookData.Pages == null) return;
+
+            allPages.Clear();
+
+            foreach (PageJsonData p in bookData.Pages)
+            {
+                PageData page = ScriptableObject.CreateInstance<PageData>();
+                Texture texture = LoadTexture(p.PageImage);
+                page.Initialize(p.PageID, p.PageText, texture, p.IsLeftPage, p.NextPageID);
+                allPages.Add(page);
+            }
+
+            _currentSpreadStart = 0;
+            ShowSpread(_currentSpreadStart);
+        }
+
+        private Texture LoadTexture(string path)
+        {
+#if UNITY_EDITOR
+            Texture editorTexture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture>(path);
+            if (editorTexture != null) return editorTexture;
+#endif
+            const string prefix = "Assets/Resources/";
+            if (path.StartsWith(prefix))
+                path = path.Substring(prefix.Length);
+
+            int dot = path.LastIndexOf('.');
+            if (dot >= 0)
+                path = path.Substring(0, dot);
+
+            return Resources.Load<Texture>(path);
         }
 
         public void UpdatePage(PageData pageData)
@@ -51,29 +113,23 @@ namespace Proyecto3.Book
 
         public void NextPages()
         {
-            // current page data - left page
-            PageData leftPageData = leftPage.GetComponent<Page>().pageData;
-            nextPage(leftPageData);
-
-            // current page data - right page
-            PageData rightPageData = rightPage.GetComponent<Page>().pageData;
-            nextPage(rightPageData);
+            int nextSpreadStart = _currentSpreadStart + 2;
+            if (allPages.Find(p => p.PageID == nextSpreadStart) == null)
+            {
+                Debug.Log("End of book.");
+                return;
+            }
+            _currentSpreadStart = nextSpreadStart;
+            ShowSpread(_currentSpreadStart);
         }
 
-        private void nextPage(PageData currentPageData)
+        private void ShowSpread(int leftPageID)
         {
-            int nextPageID = currentPageData.NextPageID;
-            PageData nextPageData = allPages.Find(page => page.PageID == nextPageID);
+            PageData leftPageData  = allPages.Find(p => p.IsLeftPage  && p.PageID == leftPageID);
+            PageData rightPageData = allPages.Find(p => !p.IsLeftPage && p.PageID == leftPageID + 1);
 
-            Debug.Log("Clicked on page with ID: " + currentPageData.PageID + ". Next page ID: " + nextPageID);
-            if (nextPageData != null)
-            {
-                UpdatePage(nextPageData);
-            }
-            else
-            {
-                Debug.LogWarning("No page found with ID: " + nextPageID);
-            }
+            if (leftPageData  != null) UpdatePage(leftPageData);
+            if (rightPageData != null) UpdatePage(rightPageData);
         }
     }
 }

@@ -17,6 +17,15 @@ namespace Proyecto3.Book
         public string PageText { get { return _pageText; } }
         public bool IsLeftPage { get { return _isLeftPage; } }
         public int NextPageID { get { return _nextPageID; } }
+
+        public void Initialize(int id, string text, Texture image, bool isLeft, int nextId)
+        {
+            _pageID     = id;
+            _pageText   = text;
+            _pageImage  = image;
+            _isLeftPage = isLeft;
+            _nextPageID = nextId;
+        }
     }
 
 }

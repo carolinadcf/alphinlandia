@@ -1,8 +1,22 @@
 # JSON Book Loading
 
+## Context
+
+Alphinlandia is a game that includes an in-game book the player can read. The book is displayed as an open spread — two pages visible at a time, a left and a right — and the player can turn pages forward.
+
+The book UI is built around three key components:
+
+- **`PageData`** — a ScriptableObject that holds the content of a single page: an ID, text, an image texture, which side it appears on (left/right), and the ID of the next page.
+- **`BookManager`** — a MonoBehaviour singleton that owns the list of all pages, controls which spread is currently shown, and handles page-turn logic.
+- **`Page`** — a MonoBehaviour attached to each page GameObject (left and right) in the scene. It holds a reference to its current `PageData` and is updated by `BookManager` when the spread changes.
+
+Originally, all page content was defined manually in the Unity editor via ScriptableObject assets. The JSON loading system replaces that workflow: a single `book1.json` file describes the entire book, and `BookManager` reads it at runtime to build the page list dynamically. This makes it possible to edit book content without ever opening the Unity editor.
+
+---
+
 ## Summary
 
-The book system previously relied on ScriptableObject assets (BookData, PageData) manually configured in the Unity editor. This change adds runtime JSON loading to BookManager so book content can be authored in plain JSON without touching Unity editor assets.
+The book system previously relied on ScriptableObject assets (BookData, PageData) manually configured in the Unity editor. This change adds runtime JSON loading to BookManager so book content can be authored in plain JSON without touching Unity editor assets. Page navigation was also reworked to advance both pages together as a synchronized spread.
 
 ---
 
@@ -11,7 +25,7 @@ The book system previously relied on ScriptableObject assets (BookData, PageData
 | File | Change |
 |------|--------|
 | `Assets/Scripts/Book/PageData.cs` | Added `Initialize()` method |
-| `Assets/BookManager.cs` | Added JSON DTOs, `_bookJson` field, `Start()`, `LoadBookFromJson()`, `LoadTexture()` |
+| `Assets/BookManager.cs` | Added JSON DTOs, `_bookJson` field, `Start()`, `LoadBookFromJson()`, `LoadTexture()`, spread-based navigation |
 
 ---
 
@@ -42,7 +56,7 @@ private class PageJsonData
 {
     public int PageID;
     public string PageText;
-    public string PageImage;   // e.g. "Assets/Resources/Example Page Illustration.jpg"
+    public string PageImage;   // e.g. "Assets/Sprites/Example Page Illustration.jpg"
     public bool IsLeftPage;
     public int NextPageID;
 }
@@ -56,11 +70,14 @@ private class BookJsonData
 }
 ```
 
-### `BookManager.cs` — Serialized Field
+### `BookManager.cs` — Fields
 
 ```csharp
 [SerializeField] private TextAsset _bookJson;
+private int _currentSpreadStart = 0;
 ```
+
+`_currentSpreadStart` tracks the PageID of the left page of the currently displayed spread.
 
 ### `BookManager.cs` — `Start()`
 
@@ -92,20 +109,22 @@ private void LoadBookFromJson(string json)
         allPages.Add(page);
     }
 
-    PageData firstLeft  = allPages.Find(p => p.IsLeftPage  && p.PageID == 0);
-    PageData firstRight = allPages.Find(p => !p.IsLeftPage && p.PageID == 1);
-    if (firstLeft  != null) UpdatePage(firstLeft);
-    if (firstRight != null) UpdatePage(firstRight);
+    _currentSpreadStart = 0;
+    ShowSpread(_currentSpreadStart);
 }
 ```
 
 ### `BookManager.cs` — `LoadTexture()`
 
-Strips the `Assets/Resources/` prefix and file extension so `Resources.Load` works:
+In the editor, uses `AssetDatabase.LoadAssetAtPath` so images can be loaded from anywhere in the project (e.g. `Assets/Sprites/`). Falls back to `Resources.Load` for runtime builds (images must be under `Assets/Resources/` in that case).
 
 ```csharp
 private Texture LoadTexture(string path)
 {
+#if UNITY_EDITOR
+    Texture editorTexture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture>(path);
+    if (editorTexture != null) return editorTexture;
+#endif
     const string prefix = "Assets/Resources/";
     if (path.StartsWith(prefix))
         path = path.Substring(prefix.Length);
@@ -118,19 +137,46 @@ private Texture LoadTexture(string path)
 }
 ```
 
+### `BookManager.cs` — Spread Navigation
+
+Pages advance as a synchronized spread. `NextPages()` advances `_currentSpreadStart` by 2 and calls `ShowSpread()`, which always updates both pages together.
+
+```csharp
+public void NextPages()
+{
+    int nextSpreadStart = _currentSpreadStart + 2;
+    if (allPages.Find(p => p.PageID == nextSpreadStart) == null)
+    {
+        Debug.Log("End of book.");
+        return;
+    }
+    _currentSpreadStart = nextSpreadStart;
+    ShowSpread(_currentSpreadStart);
+}
+
+private void ShowSpread(int leftPageID)
+{
+    PageData leftPageData  = allPages.Find(p => p.IsLeftPage  && p.PageID == leftPageID);
+    PageData rightPageData = allPages.Find(p => !p.IsLeftPage && p.PageID == leftPageID + 1);
+
+    if (leftPageData  != null) UpdatePage(leftPageData);
+    if (rightPageData != null) UpdatePage(rightPageData);
+}
+```
+
 ---
 
 ## JSON Contract
 
-Images must live under `Assets/Resources/`. The path in JSON should be `"Assets/Resources/<filename>.<ext>"`.
+Pages must be sequential: even IDs are left pages, odd IDs are right pages. Images can be referenced from anywhere under `Assets/` when running in the editor. For runtime builds, images must be under `Assets/Resources/`.
 
 ```json
 {
   "BookTitle": "Una Tiefling Salvaje",
   "Author": "Pijamada Real",
   "Pages": [
-    { "PageID": 0, "PageText": "...", "PageImage": "Assets/Resources/Image.jpg", "IsLeftPage": true,  "NextPageID": 1 },
-    { "PageID": 1, "PageText": "...", "PageImage": "Assets/Resources/Image.jpg", "IsLeftPage": false, "NextPageID": 2 }
+    { "PageID": 0, "PageText": "...", "PageImage": "Assets/Sprites/Image.jpg", "IsLeftPage": true,  "NextPageID": 1 },
+    { "PageID": 1, "PageText": "...", "PageImage": "Assets/Sprites/Image.jpg", "IsLeftPage": false, "NextPageID": 2 }
   ]
 }
 ```
@@ -140,12 +186,17 @@ Images must live under `Assets/Resources/`. The path in JSON should be `"Assets/
 ## Inspector Setup
 
 1. Drag `book1.json` into the `Book Json` field on the BookManager GameObject.
-2. Make sure all image files referenced in the JSON are under `Assets/Resources/`.
+2. Image files can be anywhere under `Assets/` for editor testing. For builds, place them under `Assets/Resources/`.
 
 ---
 
 ## Verification
 
 1. Enter Play Mode — both pages should display text and images from the JSON.
-2. Click a page — `NextPages()` should advance correctly using the runtime `allPages` list.
-3. Changing the JSON content (title, text, image paths) should reflect without touching ScriptableObject assets.
+2. Click next — both pages should update together as a single spread.
+3. Reach the last spread — console should log "End of book." with no errors.
+4. Changing the JSON content (title, text, image paths) should reflect without touching ScriptableObject assets.
+
+---
+
+← [Back to Overview](overview.md)
